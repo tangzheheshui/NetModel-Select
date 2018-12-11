@@ -1,0 +1,17 @@
+﻿  TcpSockeServer.cpp
+  MyTask.cpp
+c:\users\tangzheheshui\documents\visual studio 2015\projects\netmodel-select\src\server\mytask.cpp(26): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\tangzheheshui\documents\visual studio 2015\projects\netmodel-select\src\server\mytask.cpp(33): warning C4018: “<”: 有符号/无符号不匹配
+  main.cpp
+  正在生成代码...
+MyTask.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_create，该符号在函数 "public: bool __thiscall MyTask::MainTask(void)" (?MainTask@MyTask@@QAE_NXZ) 中被引用
+TcpSockeServer.obj : error LNK2001: 无法解析的外部符号 __imp__pthread_create
+MyTask.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_mutex_lock，该符号在函数 "private: static void * __cdecl MyTask::ThreadProc(void *)" (?ThreadProc@MyTask@@CAPAXPAX@Z) 中被引用
+TcpSockeServer.obj : error LNK2001: 无法解析的外部符号 __imp__pthread_mutex_lock
+MyTask.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_mutex_unlock，该符号在函数 "private: static void * __cdecl MyTask::ThreadProc(void *)" (?ThreadProc@MyTask@@CAPAXPAX@Z) 中被引用
+TcpSockeServer.obj : error LNK2001: 无法解析的外部符号 __imp__pthread_mutex_unlock
+TcpSockeServer.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_cancel，该符号在函数 "public: __thiscall CTCPSocketServer::~CTCPSocketServer(void)" (??1CTCPSocketServer@@QAE@XZ) 中被引用
+TcpSockeServer.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_mutex_init，该符号在函数 "public: __thiscall CTCPSocketServer::CTCPSocketServer(void)" (??0CTCPSocketServer@@QAE@XZ) 中被引用
+TcpSockeServer.obj : error LNK2019: 无法解析的外部符号 __imp__pthread_mutex_destroy，该符号在函数 "public: __thiscall CTCPSocketServer::~CTCPSocketServer(void)" (??1CTCPSocketServer@@QAE@XZ) 中被引用
+lib/x64/pthreadVC2.lib : warning LNK4272: 库计算机类型“x64”与目标计算机类型“X86”冲突
+C:\Users\tangzheheshui\Documents\Visual Studio 2015\Projects\NetModel-Select\src\Debug\server.exe : fatal error LNK1120: 6 个无法解析的外部命令
