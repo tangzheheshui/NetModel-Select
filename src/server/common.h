@@ -14,7 +14,7 @@ using namespace std;
 
 #ifndef LINUX_OS
 #pragma comment(lib,"ws2_32.lib")
-#pragma comment(lib,"lib/x64/pthreadVC2.lib")
+//#pragma comment(lib,"lib/x64/pthreadVC2.lib")
 #endif
 
 #if defined(_WIN64)
