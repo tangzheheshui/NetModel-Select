@@ -16,7 +16,7 @@ CTCPSocketServer::CTCPSocketServer()
 	
 	for(int i=0;i<MAX_LISTEN;++i)
 	{
-		g_fd_ArrayC[i] =0;
+		m_fd_ArrayC[i] =0;
 	}
 	
 	pthread_mutex_init(&m_csData, NULL);
@@ -28,7 +28,6 @@ CTCPSocketServer::~CTCPSocketServer()
 	pthread_mutex_destroy(&m_csData); 
 	pthread_mutex_destroy(&m_csSocket); 
 	pthread_mutex_destroy(&m_csSend);
-	pthread_cancel(m_iThreadId);
 }
 
 void  CTCPSocketServer::SetEnvironment()
@@ -44,6 +43,7 @@ void CTCPSocketServer::ResetEnvironment()
 
 int CTCPSocketServer::CreateServer(char* serverIp,int port , DWORD mode)
 {
+	sockaddr_in addrServer;
 	addrServer.sin_family=AF_INET;
 	addrServer.sin_addr.S_un.S_addr=inet_addr(serverIp);
 	addrServer.sin_port=htons(port);
@@ -61,15 +61,17 @@ int CTCPSocketServer::CreateServer(char* serverIp,int port , DWORD mode)
 	}
 	ret = listen(m_sockServer, MAX_LISTEN);
 	
+	pthread_t iThreadId;
 	//创建是否成功
 	if (ret == 0)
 	{ 
-		ret = pthread_create(&m_iThreadId, NULL, ServerThreadProc, this); //创建线程
-		printf("create socket success\n");
+		ret = pthread_create(&iThreadId, NULL, ServerThreadProc, this); //创建线程
+		printf("CTCPSocketServer::CreateServer create socket success\n");
     }
 	else
 	{
-		printf("create socket error\n");
+		printf("CTCPSocketServer::CreateServer create socket error\n");
+		pthread_cancel(iThreadId);
 		closesocket(m_sockServer);
 	}
 	return 0;
@@ -86,9 +88,9 @@ int CTCPSocketServer::MainLogic()
 
 		for (i = 0; i < m_iNumSock; ++i)
 		{
-			if (g_fd_ArrayC[i] != 0)
+			if (m_fd_ArrayC[i] != 0)
 			{
-				FD_SET(g_fd_ArrayC[i], &m_fdRead);
+				FD_SET(m_fd_ArrayC[i], &m_fdRead);
 			}
 		}
 		//连接请求和接到报文
@@ -104,12 +106,14 @@ int CTCPSocketServer::MainLogic()
 			printf("select timeout\n");
 			continue;
 		}
+		//select返回成功的时候 m_sockServer会在m_fdRead中移除吗？？
 		if (FD_ISSET(m_sockServer, &m_fdRead))
 		{
 			SOCKET AcceptSocket;
 			int nSize = sizeof(sockaddr);
 			sockaddr_in  addrClient;
 			AcceptSocket = accept(m_sockServer, (sockaddr*)&addrClient, &nSize);
+			//连接数满了
 			if (m_iNumSock == MAX_LISTEN)
 			{
 				printf("服务器端连接已经满\n");
@@ -131,9 +135,9 @@ int CTCPSocketServer::MainLogic()
 			pthread_mutex_lock(&m_csSocket);
 			for (i = 0; i < MAX_LISTEN; ++i)
 			{
-				if (g_fd_ArrayC[i] == 0)
+				if (m_fd_ArrayC[i] == 0)
 				{
-					g_fd_ArrayC[i] = AcceptSocket;
+					m_fd_ArrayC[i] = AcceptSocket;
 					m_iNumSock++;
 					break;
 				}
@@ -145,7 +149,7 @@ int CTCPSocketServer::MainLogic()
 		for (i = 0; i < m_iNumSock; ++i)
 		{
 			pthread_mutex_lock(&m_csSocket);
-			SOCKET whichclient = g_fd_ArrayC[i];
+			SOCKET whichclient = m_fd_ArrayC[i];
 			pthread_mutex_unlock(&m_csSocket);
 			if (whichclient == 0)
 			{
@@ -161,8 +165,8 @@ int CTCPSocketServer::MainLogic()
 					m_iNumSock--;
 					closesocket(whichclient);
 					pthread_mutex_lock(&m_csSocket);
-					FD_CLR(g_fd_ArrayC[i], &m_fdRead);
-					g_fd_ArrayC[i] = 0;
+					FD_CLR(m_fd_ArrayC[i], &m_fdRead);
+					m_fd_ArrayC[i] = 0;
 					pthread_mutex_unlock(&m_csSocket);
 				}
 				else
@@ -231,10 +235,10 @@ int CTCPSocketServer::SendData2Client(const char* buf,int len,int whichclient)
 		pthread_mutex_lock(&m_csSocket);
 		for(int i=0;i<MAX_LISTEN;++i)
 		{
-			if(g_fd_ArrayC[i] == whichclient)
+			if(m_fd_ArrayC[i] == whichclient)
 			{
-				FD_CLR(g_fd_ArrayC[i],&m_fdRead);
-				g_fd_ArrayC[i] =0;
+				FD_CLR(m_fd_ArrayC[i],&m_fdRead);
+				m_fd_ArrayC[i] =0;
 			}
 		}
 		pthread_mutex_unlock(&m_csSocket);
