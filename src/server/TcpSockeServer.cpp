@@ -14,10 +14,10 @@ CTCPSocketServer::CTCPSocketServer()
 , m_iNumSock(0)
 {
 	
-	for(int i=0;i<MAX_LISTEN;++i)
+	/*for(int i=0;i<MAX_LISTEN;++i)
 	{
 		m_fd_ArrayC[i] =0;
-	}
+	}*/
 	
 	pthread_mutex_init(&m_csData, NULL);
 	pthread_mutex_init(&m_csSend, NULL);
@@ -65,8 +65,11 @@ int CTCPSocketServer::CreateServer(char* serverIp,int port , DWORD mode)
 	//创建是否成功
 	if (ret == 0)
 	{ 
-		ret = pthread_create(&iThreadId, NULL, ServerThreadProc, this); //创建线程
-		printf("CTCPSocketServer::CreateServer create socket success\n");
+		//创建线程
+		ret = pthread_create(&iThreadId, NULL, ServerThreadProc, this); 
+		char str[200] = { 0 };
+		sprintf(str, "create socket success,ip=%s,port=%d\n", serverIp, port);
+		printf(str);
     }
 	else
 	{
@@ -83,30 +86,29 @@ int CTCPSocketServer::MainLogic()
 	int i = 0;
 	while (1)
 	{
-		FD_ZERO(&m_fdRead);//设置count =0;
-		FD_SET(m_sockServer, &m_fdRead); //设置索引为count的值
-
-		for (i = 0; i < m_iNumSock; ++i)
+		//设置count =0;
+		FD_ZERO(&m_fdRead);
+		//设置索引为count的值(第一位为server)
+		FD_SET(m_sockServer, &m_fdRead); 
+		//将m_vecClient列表顺序插入到m_fdRead
+		for (int i = 0; i < m_vecClient.size(); i++)
 		{
-			if (m_fd_ArrayC[i] != 0)
-			{
-				FD_SET(m_fd_ArrayC[i], &m_fdRead);
-			}
+			FD_SET(m_vecClient.at(i), &m_fdRead);
 		}
-		//连接请求和接到报文
+		//网络事件
 		nRes = select(0, &m_fdRead, NULL, NULL, NULL);
 		//nRes = select(MAX_LISTEN+1, &fdread, NULL, NULL, NULL);
 		if (nRes < 0)
 		{
-			printf("error\n");//服务器socket失效
+			printf("select return value < 0\n");//服务器socket失效
 			break;
 		}
 		else if (nRes == 0)
 		{
-			printf("select timeout\n");
+			printf("select return value <=0\n");
 			continue;
 		}
-		//select返回成功的时候 m_sockServer会在m_fdRead中移除吗？？
+		//
 		if (FD_ISSET(m_sockServer, &m_fdRead))
 		{
 			SOCKET AcceptSocket;
@@ -133,23 +135,17 @@ int CTCPSocketServer::MainLogic()
 				continue;
 			}
 			pthread_mutex_lock(&m_csSocket);
-			for (i = 0; i < MAX_LISTEN; ++i)
-			{
-				if (m_fd_ArrayC[i] == 0)
-				{
-					m_fd_ArrayC[i] = AcceptSocket;
-					m_iNumSock++;
-					break;
-				}
-			}
+		
+			m_vecClient.push_back(AcceptSocket);
 			pthread_mutex_unlock(&m_csSocket);
 			printf("new client:port[%d]IP [%s] AcceptSocket=%d\n", ntohs(addrClient.sin_port), 
 				inet_ntoa(addrClient.sin_addr), (int)AcceptSocket);
 		}//if(FD_ISSET())
-		for (i = 0; i < m_iNumSock; ++i)
+		for (i = 0; i < m_vecClient.size(); ++i)
 		{
 			pthread_mutex_lock(&m_csSocket);
-			SOCKET whichclient = m_fd_ArrayC[i];
+			//SOCKET whichclient = m_fd_ArrayC[i];
+			SOCKET whichclient = m_vecClient[i];
 			pthread_mutex_unlock(&m_csSocket);
 			if (whichclient == 0)
 			{
@@ -165,8 +161,11 @@ int CTCPSocketServer::MainLogic()
 					m_iNumSock--;
 					closesocket(whichclient);
 					pthread_mutex_lock(&m_csSocket);
-					FD_CLR(m_fd_ArrayC[i], &m_fdRead);
-					m_fd_ArrayC[i] = 0;
+					FD_CLR(m_vecClient[i], &m_fdRead);
+					//将第i个元素删除
+					vector<SOCKET>::iterator iter = m_vecClient.begin();
+					advance(iter, i);
+					m_vecClient.erase(iter);
 					pthread_mutex_unlock(&m_csSocket);
 				}
 				else
@@ -188,7 +187,6 @@ int CTCPSocketServer::PushDataToReceiveQueue(const string &data,int whichclient)
 {
 	pthread_mutex_lock(&m_csData);
 	m_mapRecvData[whichclient].push_back(data);
-	printf("m_mapRecvData size = %d\n", (int)m_mapRecvData.size());
 	pthread_mutex_unlock(&m_csData);
 	return 0;
 }
@@ -230,19 +228,6 @@ int CTCPSocketServer::SendData2Client(const char* buf,int len,int whichclient)
 	}
 
 	pthread_mutex_unlock(&m_csSend);
-	if(nLeft > 0)
-	{
-		pthread_mutex_lock(&m_csSocket);
-		for(int i=0;i<MAX_LISTEN;++i)
-		{
-			if(m_fd_ArrayC[i] == whichclient)
-			{
-				FD_CLR(m_fd_ArrayC[i],&m_fdRead);
-				m_fd_ArrayC[i] =0;
-			}
-		}
-		pthread_mutex_unlock(&m_csSocket);
-	}
 	
 	return nLeft > 0;
 }

@@ -34,8 +34,12 @@ void* MyTask::ThreadProc(LPVOID lpParam)
 				{
 					oneRequest.append(datas[i]);
 				}
+				printf("recv:%s\n",oneRequest.c_str());
 				isfulldata = true;
-				server->SendData2Client(oneRequest.c_str(), oneRequest.length(), it->first);
+
+				//»Ø¸´
+				string strAnswer = "I am server\n";
+				server->SendData2Client(strAnswer.c_str(), strAnswer.length(), it->first);
 			}
 			if (isfulldata)
 			{
@@ -66,7 +70,7 @@ bool MyTask::MainTask()
 {
 	bool ret = false;
 	CTCPSocketServer::SetEnvironment();
-	int bCreateServer = m_sockServer->CreateServer("127.0.0.1", 65432,0);
+	int bCreateServer = m_sockServer->CreateServer("192.168.31.42", 65432, 0);
 	if (bCreateServer == 0)//>³É¹¦
 	{
 		ret = true;
