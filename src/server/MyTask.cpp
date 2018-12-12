@@ -66,7 +66,7 @@ bool MyTask::MainTask()
 {
 	bool ret = false;
 	CTCPSocketServer::SetEnvironment();
-	int bCreateServer = m_sockServer->CreateServer("192.168.31.42", 65432,0);
+	int bCreateServer = m_sockServer->CreateServer("127.0.0.1", 65432,0);
 	if (bCreateServer == 0)//>³É¹¦
 	{
 		ret = true;

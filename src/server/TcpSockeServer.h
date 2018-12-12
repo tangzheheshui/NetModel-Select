@@ -16,12 +16,10 @@ public:
 private:
 	SOCKET						m_sockServer;
 	void*						m_hThread;
-	struct sockaddr_in			addrServer;
-	SOCKET						g_fd_ArrayC[MAX_LISTEN];
-	unsigned int				g_SendHeartTime[MAX_LISTEN];
+	SOCKET						m_fd_ArrayC[MAX_LISTEN];
+	unsigned int				m_sendHeartTime[MAX_LISTEN];
 	fd_set						m_fdRead;
 	int							m_iNumSock;
-	pthread_t					m_iThreadId;	//>Ïß³Ì¾ä±ú
 private:
 
 	/*
