@@ -11,14 +11,7 @@ void* ServerThreadProc(void* lpParam)
 CTCPSocketServer::CTCPSocketServer()
 : m_hThread(NULL)
 , m_sockServer(0)
-, m_iNumSock(0)
 {
-	
-	/*for(int i=0;i<MAX_LISTEN;++i)
-	{
-		m_fd_ArrayC[i] =0;
-	}*/
-	
 	pthread_mutex_init(&m_csData, NULL);
 	pthread_mutex_init(&m_csSend, NULL);
 	pthread_mutex_init(&m_csSocket, NULL);
@@ -116,7 +109,7 @@ int CTCPSocketServer::MainLogic()
 			sockaddr_in  addrClient;
 			AcceptSocket = accept(m_sockServer, (sockaddr*)&addrClient, &nSize);
 			//连接数满了
-			if (m_iNumSock == MAX_LISTEN)
+			if (m_vecClient.size() == MAX_LISTEN)
 			{
 				printf("服务器端连接已经满\n");
 				const char* pBuf = "refuse";
@@ -144,7 +137,6 @@ int CTCPSocketServer::MainLogic()
 		for (i = 0; i < m_vecClient.size(); ++i)
 		{
 			pthread_mutex_lock(&m_csSocket);
-			//SOCKET whichclient = m_fd_ArrayC[i];
 			SOCKET whichclient = m_vecClient[i];
 			pthread_mutex_unlock(&m_csSocket);
 			if (whichclient == 0)
@@ -158,7 +150,6 @@ int CTCPSocketServer::MainLogic()
 				if (nRes <= 0)
 				{
 					printf("client has closed\n");
-					m_iNumSock--;
 					closesocket(whichclient);
 					pthread_mutex_lock(&m_csSocket);
 					FD_CLR(m_vecClient[i], &m_fdRead);
@@ -181,7 +172,6 @@ int CTCPSocketServer::MainLogic()
 	closesocket(m_sockServer);
 	return 0;
 }
-
 
 int CTCPSocketServer::PushDataToReceiveQueue(const string &data,int whichclient)
 {
@@ -244,7 +234,5 @@ bool CTCPSocketServer::GetAddressBySocket(int peersocket, SMVD_SOCKETADDR &peera
 	}
 	peeraddr.ip = inet_ntoa(peeraddress.sin_addr);
 	peeraddr.port = ntohs(peeraddress.sin_port);
-	//读取IP和Port
-	// cout<<"IP: "<<::inet_ntoa(m_address.sin_addr)<<"  PORT: "<<ntohs(m_address.sin_port)<<endl;
 	return true;
 }

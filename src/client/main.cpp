@@ -22,7 +22,7 @@ void main()
 	SOCKADDR_IN addrSrv;
 	addrSrv.sin_family = AF_INET;
 	addrSrv.sin_port = htons(65432);
-	addrSrv.sin_addr.S_un.S_addr = inet_addr("192.168.31.42"); 
+	addrSrv.sin_addr.S_un.S_addr = inet_addr("192.168.1.210"); 
 	//´´½¨Ì×½Ó×Ö
 	SOCKET sockClient = socket(AF_INET, SOCK_STREAM, 0);
 	if (SOCKET_ERROR == sockClient){
@@ -35,8 +35,6 @@ void main()
 		printf("Connect failed:%d", WSAGetLastError());
 		return;
 	}
-	int count = 0;
-
 	while(1)
 	{
 		printf("press enter:\n");

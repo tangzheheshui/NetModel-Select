@@ -17,7 +17,6 @@ private:
 	SOCKET						m_sockServer;
 	void*						m_hThread;
 	vector<SOCKET>				m_vecClient;
-	unsigned int				m_sendHeartTime[MAX_LISTEN];
 	fd_set						m_fdRead;
 	int							m_iNumSock;
 private:
